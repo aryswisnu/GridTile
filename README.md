@@ -60,7 +60,7 @@ Windows keep their rough position. GridTile sorts them top to bottom, left to ri
 Requires macOS 13 Ventura or later and Xcode command line tools (`xcode-select --install`).
 
 ```bash
-git clone https://github.com/aryswisnu/gridtile.git
+git clone https://github.com/aryswisnu/GridTile.git
 cd gridtile
 ./build.sh
 open /Applications/GridTile.app
