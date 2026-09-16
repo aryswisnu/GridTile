@@ -20,6 +20,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         let trusted = AXIsProcessTrustedWithOptions(options)
+        // Bound every AX call, not only per-app ones (per-element timeouts do not cover window elements).
+        AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), 0.5)
 
         hotkey = Hotkey(keyCode: UInt32(kVK_ANSI_T), modifiers: UInt32(controlKey | optionKey | cmdKey)) {
             tileNow()
@@ -35,7 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(tileItem)
 
         if !hotkey.isRegistered {
-            let item = NSMenuItem(title: "Hotkey ⌃⌥⌘T unavailable (in use by another app)", action: nil, keyEquivalent: "")
+            let item = NSMenuItem(title: "Hotkey ⌃⌥⌘T failed to register", action: nil, keyEquivalent: "")
             item.isEnabled = false
             menu.addItem(item)
         }

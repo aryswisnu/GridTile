@@ -53,6 +53,8 @@ final class GridTests: XCTestCase {
     func testCellsDoNotOverlap() {
         for n in 1...16 {
             let cells = gridLayout(count: n, in: area)
+            let covered = cells.reduce(0) { $0 + $1.width * $1.height }
+            XCTAssertEqual(covered, area.width * area.height, accuracy: 0.01, "n=\(n) cells leave gaps")
             for i in 0..<cells.count {
                 for j in (i + 1)..<cells.count {
                     XCTAssertFalse(cells[i].insetBy(dx: 0.01, dy: 0.01).intersects(cells[j]), "n=\(n) cells \(i),\(j) overlap")

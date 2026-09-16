@@ -5,7 +5,7 @@ final class Hotkey {
     private var hotKeyRef: EventHotKeyRef?
     private var handlerRef: EventHandlerRef?
     private let handler: () -> Void
-    /// False when another app already owns the key combination.
+    /// False when registration failed. A cross-app conflict is not reported by Carbon; the key then never fires.
     let isRegistered: Bool
 
     init(keyCode: UInt32, modifiers: UInt32, handler: @escaping () -> Void) {

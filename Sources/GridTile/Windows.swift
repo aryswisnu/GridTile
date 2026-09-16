@@ -2,7 +2,6 @@ import AppKit
 import ApplicationServices
 
 struct VisibleWindow {
-    let pid: pid_t
     let frame: CGRect      // CG coordinates
     let ax: AXUIElement
 }
@@ -44,7 +43,7 @@ func visibleWindows(on screen: NSScreen) -> [VisibleWindow] {
               target.contains(CGPoint(x: frame.midX, y: frame.midY)),
               let ax = axWindow(pid: pid, matching: frame, used: &used)
         else { continue }
-        result.append(VisibleWindow(pid: pid, frame: frame, ax: ax))
+        result.append(VisibleWindow(frame: frame, ax: ax))
     }
     return rowMajorSorted(result)
 }
@@ -69,17 +68,22 @@ private func rowMajorSorted(_ windows: [VisibleWindow]) -> [VisibleWindow] {
 
 private func axWindow(pid: pid_t, matching frame: CGRect, used: inout Set<AXUIElement>) -> AXUIElement? {
     let app = AXUIElementCreateApplication(pid)
-    AXUIElementSetMessagingTimeout(app, 0.25)
     var value: CFTypeRef?
     guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &value) == .success,
           let windows = value as? [AXUIElement] else { return nil }
     let match = windows.first { w in
-        guard !used.contains(w), let f = axFrame(w) else { return false }
+        guard !used.contains(w), axRole(w) == kAXWindowRole, let f = axFrame(w) else { return false }
         return abs(f.minX - frame.minX) <= 2 && abs(f.minY - frame.minY) <= 2
             && abs(f.width - frame.width) <= 2 && abs(f.height - frame.height) <= 2
     }
     if let match { used.insert(match) }
     return match
+}
+
+private func axRole(_ w: AXUIElement) -> String? {
+    var value: CFTypeRef?
+    guard AXUIElementCopyAttributeValue(w, kAXRoleAttribute as CFString, &value) == .success else { return nil }
+    return value as? String
 }
 
 private func axFrame(_ w: AXUIElement) -> CGRect? {

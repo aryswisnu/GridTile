@@ -6,7 +6,7 @@ Menu-bar macOS app. One hotkey tiles every visible window on the current display
 
 - Hotkey: Ctrl+Opt+Cmd+T (global, Carbon `RegisterEventHotKey`).
 - Target display: the one under the mouse cursor. Usable area: `NSScreen.visibleFrame` (excludes menu bar and Dock).
-- Window set: windows from `CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements])` with layer 0, alpha > 0, width and height > 50, owner not Dock / WindowServer / Control Center / Notification Center / Window Server / GridTile itself, and center point inside the target display. This yields only windows on the current Space and display, not minimized, not hidden.
+- Window set: windows from `CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements])` with layer 0, alpha > 0, width and height > 50, owner not Dock / WindowServer / Control Center / Notification Center / Window Server / Spotlight / GridTile itself, and center point inside the target display. This yields only windows on the current Space and display, not minimized, not hidden.
 - Order: sort by y then x of current frame (top-left first). Cells fill left to right, top to bottom.
 - Grid: N windows. `cols = ceil(sqrt(N))`, `rows = ceil(N / cols)`. Every full row has `cols` cells. Last row has `N - (rows-1)*cols` cells, each stretched to `width / lastCount`. Gap 0.
   - 1 -> 1x1. 2 -> 2x1. 4 -> 2x2. 7 -> 3 cols, rows 3,3,1. 12 -> 4x3.
