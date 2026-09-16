@@ -17,10 +17,10 @@
 </p>
 
 <p align="center">
-  <img src="assets/before.svg" width="46%" alt="Before: five overlapping windows">
-  &nbsp;&nbsp;
-  <img src="assets/after.svg" width="46%" alt="After: three on top, two stretched below">
+  <img src="assets/demo.gif" width="90%" alt="Six windows snap into a 3x2 grid with one keypress">
 </p>
+
+<p align="center"><sub>Six terminal windows, one keypress. Window contents blurred.</sub></p>
 
 ## Why this exists
 
