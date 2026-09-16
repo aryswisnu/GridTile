@@ -4,6 +4,8 @@
 <dict>
     <key>CFBundleExecutable</key>
     <string>GridTile</string>
+    <key>CFBundleIconFile</key>
+    <string>GridTile</string>
     <key>CFBundleIdentifier</key>
     <string>com.local.gridtile</string>
     <key>CFBundleName</key>
