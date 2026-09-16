@@ -70,13 +70,13 @@ macOS will ask for Accessibility permission. Grant it in **System Settings > Pri
 
 A `⊞` icon appears in the menu bar with three items: **Tile Now**, **Launch at Login**, **Quit**.
 
-> **Rebuilding?** The app is ad-hoc signed by default, so every build has a new code hash and macOS silently stops trusting it, even though the toggle still shows "on". After each `./build.sh`: remove GridTile from the Accessibility list with the minus button, relaunch, and grant again.
->
-> To make the grant stick across builds, create a self-signed certificate once (Keychain Access > Certificate Assistant > Create a Certificate, name `GridTile Dev`, type **Code Signing**) and build with:
+> **Rebuilding?** Ad-hoc signed apps get a new code hash on every build, and macOS silently drops the Accessibility grant even though the toggle still shows "on". Run this once:
 >
 > ```bash
-> CODESIGN_IDENTITY="GridTile Dev" ./build.sh
+> ./scripts/make-signing-cert.sh
 > ```
+>
+> It creates a self-signed `GridTile Dev` code-signing certificate in your login keychain (one password dialog). `build.sh` uses it automatically from then on, and the grant survives rebuilds. After the first signed build, remove the old GridTile entry from the Accessibility list, relaunch, and grant one last time.
 
 ## How it works
 
