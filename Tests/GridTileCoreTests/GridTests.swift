@@ -29,16 +29,39 @@ final class GridTests: XCTestCase {
         XCTAssertEqual(cells[3], CGRect(x: 600, y: 425, width: 600, height: 400))
     }
 
-    func testSevenIsThreeColsLastRowStretched() {
+    func testThreeIsThreeColumns() {
+        let cells = gridLayout(count: 3, in: area)
+        XCTAssertEqual(cells, [
+            CGRect(x: 0, y: 25, width: 400, height: 800),
+            CGRect(x: 400, y: 25, width: 400, height: 800),
+            CGRect(x: 800, y: 25, width: 400, height: 800),
+        ])
+    }
+
+    func testFiveIsThreeOverTwo() {
+        let cells = gridLayout(count: 5, in: area)
+        XCTAssertEqual(cells.count, 5)
+        XCTAssertEqual(cells[0], CGRect(x: 0, y: 25, width: 400, height: 400))
+        XCTAssertEqual(cells[3], CGRect(x: 0, y: 425, width: 600, height: 400))
+        XCTAssertEqual(cells[4], CGRect(x: 600, y: 425, width: 600, height: 400))
+    }
+
+    func testSevenIsFourOverThree() {
         let cells = gridLayout(count: 7, in: area)
         XCTAssertEqual(cells.count, 7)
-        // rows of 3,3,1. row height 800/3.
-        let rowH = 800.0 / 3.0
-        XCTAssertEqual(cells[0].width, 400, accuracy: 0.001)
-        XCTAssertEqual(cells[0].height, rowH, accuracy: 0.001)
-        XCTAssertEqual(cells[6].minX, 0)
-        XCTAssertEqual(cells[6].width, 1200)
-        XCTAssertEqual(cells[6].minY, 25 + 2 * rowH, accuracy: 0.001)
+        XCTAssertEqual(cells[0], CGRect(x: 0, y: 25, width: 300, height: 400))
+        XCTAssertEqual(cells[3], CGRect(x: 900, y: 25, width: 300, height: 400))
+        XCTAssertEqual(cells[4].width, 400)
+        XCTAssertEqual(cells[6], CGRect(x: 800, y: 425, width: 400, height: 400))
+    }
+
+    func testPortraitAreaStacksRows() {
+        let portrait = CGRect(x: 0, y: 0, width: 800, height: 1200)
+        let cells = gridLayout(count: 2, in: portrait)
+        XCTAssertEqual(cells, [
+            CGRect(x: 0, y: 0, width: 800, height: 600),
+            CGRect(x: 0, y: 600, width: 800, height: 600),
+        ])
     }
 
     func testTwelveIsFourByThree() {

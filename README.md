@@ -30,18 +30,18 @@ Rectangle, Magnet, Moom and friends solve this with *more presets*: thirds, sixt
 
 GridTile has exactly one action. It looks at how many windows are visible on the display under your cursor, picks the grid that fits them, and tiles. Open another window, press again, the grid re-flows. Close three, press again, it re-flows.
 
-| Windows | Grid |
-|:-:|:-:|
-| 1 | full screen |
-| 2 | side by side |
-| 3 | 2 on top, 1 stretched below |
-| 4 | 2 x 2 |
-| 5 | 3 on top, 2 stretched below |
-| 7 | 3 + 3 + 1 |
-| 9 | 3 x 3 |
-| 12 | 4 x 3 |
+| Windows | 16:9 display | Ultrawide 21:9 |
+|:-:|:-:|:-:|
+| 1 | full screen | full screen |
+| 2 | side by side | side by side |
+| 3 | 3 columns | 3 columns |
+| 4 | 2 x 2 | 4 columns |
+| 5 | 3 on top, 2 below | 5 columns |
+| 7 | 4 on top, 3 below | 4 + 3 |
+| 9 | 5 + 4 | 5 + 4 |
+| 12 | 4 x 3 | 6 x 2 |
 
-The rule: `cols = ceil(sqrt(N))`, `rows = ceil(N / cols)`. The last row stretches its windows to fill the width so there is never an empty hole.
+The rule: `rows = round(sqrt(N * height / width))`, `cols = ceil(N / rows)`. Cells stay as close to square as the display allows, so a wide screen gets more columns and a portrait screen gets more rows. The last row stretches its windows to fill the width so there is never an empty hole.
 
 ## What counts as a window
 
@@ -70,7 +70,13 @@ macOS will ask for Accessibility permission. Grant it in **System Settings > Pri
 
 A `⊞` icon appears in the menu bar with three items: **Tile Now**, **Launch at Login**, **Quit**.
 
-> **Rebuilding?** The app is ad-hoc signed, so every build has a new signature and macOS forgets the Accessibility grant. Re-toggle GridTile in the Accessibility list after each `./build.sh`. Same for Launch at Login.
+> **Rebuilding?** The app is ad-hoc signed by default, so every build has a new code hash and macOS silently stops trusting it, even though the toggle still shows "on". After each `./build.sh`: remove GridTile from the Accessibility list with the minus button, relaunch, and grant again.
+>
+> To make the grant stick across builds, create a self-signed certificate once (Keychain Access > Certificate Assistant > Create a Certificate, name `GridTile Dev`, type **Code Signing**) and build with:
+>
+> ```bash
+> CODESIGN_IDENTITY="GridTile Dev" ./build.sh
+> ```
 
 ## How it works
 

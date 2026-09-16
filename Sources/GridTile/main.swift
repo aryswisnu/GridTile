@@ -13,13 +13,14 @@ func tileNow() {
     }
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
     private var hotkey: Hotkey!
+    private let axItem = NSMenuItem(title: "", action: #selector(openAccessibilitySettings), keyEquivalent: "")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        let trusted = AXIsProcessTrustedWithOptions(options)
+        _ = AXIsProcessTrustedWithOptions(options)
         // Bound every AX call, not only per-app ones (per-element timeouts do not cover window elements).
         AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), 0.5)
 
@@ -31,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.button?.title = "⊞"
 
         let menu = NSMenu()
+        menu.delegate = self
 
         let tileItem = NSMenuItem(title: "Tile Now  ⌃⌥⌘T", action: #selector(tile), keyEquivalent: "")
         tileItem.target = self
@@ -42,9 +44,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(item)
         }
 
-        if !trusted {
-            menu.addItem(NSMenuItem(title: "Accessibility: not granted", action: nil, keyEquivalent: ""))
-        }
+        axItem.target = self
+        menu.addItem(axItem)
 
         let loginItem = NSMenuItem(title: "Launch at Login", action: #selector(toggleLogin(_:)), keyEquivalent: "")
         loginItem.target = self
@@ -54,6 +55,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
+    }
+
+    // Re-check Accessibility every time the menu opens; the grant can change while running.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        let trusted = AXIsProcessTrusted()
+        axItem.title = trusted ? "Accessibility: granted" : "Accessibility: not granted (click to open settings)"
+        axItem.isEnabled = !trusted
+    }
+
+    @objc private func openAccessibilitySettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
 
     @objc private func tile() { tileNow() }

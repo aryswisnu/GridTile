@@ -1,12 +1,16 @@
 import CoreGraphics
 
-/// Splits `area` into `count` cells. cols = ceil(sqrt(count)), rows = ceil(count/cols).
+/// Splits `area` into `count` cells, choosing the row count from the area's aspect ratio
+/// so cells stay close to square: rows = round(sqrt(count * height / width)), cols = ceil(count / rows).
+/// On a 16:9 display: 2 -> 2x1, 3 -> 3x1, 4 -> 2x2, 5 -> 3+2, 7 -> 4+3, 12 -> 4x3.
 /// Full rows have `cols` cells. The last row stretches its cells to fill the width.
 /// Cells are returned left-to-right, top-to-bottom, in CG coordinates (y down).
 public func gridLayout(count: Int, in area: CGRect) -> [CGRect] {
-    guard count > 0 else { return [] }
-    let cols = Int(Double(count).squareRoot().rounded(.up))
-    let rows = (count + cols - 1) / cols
+    guard count > 0, area.width > 0, area.height > 0 else { return [] }
+    let ideal = (Double(count) * Double(area.height) / Double(area.width)).squareRoot()
+    var rows = max(1, min(count, Int(ideal.rounded())))
+    let cols = (count + rows - 1) / rows
+    rows = (count + cols - 1) / cols   // drop rows that would be empty
     let rowHeight = area.height / CGFloat(rows)
     var cells: [CGRect] = []
     cells.reserveCapacity(count)

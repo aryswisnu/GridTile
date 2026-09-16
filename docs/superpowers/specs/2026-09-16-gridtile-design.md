@@ -8,8 +8,8 @@ Menu-bar macOS app. One hotkey tiles every visible window on the current display
 - Target display: the one under the mouse cursor. Usable area: `NSScreen.visibleFrame` (excludes menu bar and Dock).
 - Window set: windows from `CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements])` with layer 0, alpha > 0, width and height > 50, owner not Dock / WindowServer / Control Center / Notification Center / Window Server / Spotlight / GridTile itself, and center point inside the target display. This yields only windows on the current Space and display, not minimized, not hidden.
 - Order: sort by y then x of current frame (top-left first). Cells fill left to right, top to bottom.
-- Grid: N windows. `cols = ceil(sqrt(N))`, `rows = ceil(N / cols)`. Every full row has `cols` cells. Last row has `N - (rows-1)*cols` cells, each stretched to `width / lastCount`. Gap 0.
-  - 1 -> 1x1. 2 -> 2x1. 4 -> 2x2. 7 -> 3 cols, rows 3,3,1. 12 -> 4x3.
+- Grid: N windows in area W x H. `rows = clamp(round(sqrt(N * H / W)), 1, N)`, `cols = ceil(N / rows)`, then `rows = ceil(N / cols)` to drop empty rows. Every full row has `cols` cells. Last row has `N - (rows-1)*cols` cells, each stretched to `width / lastCount`. Gap 0.
+  - On 16:9: 1 -> 1x1. 2 -> 2x1. 3 -> 3x1. 4 -> 2x2. 5 -> 3+2. 7 -> 4+3. 12 -> 4x3. Portrait 2 -> 1x2.
 - Apply: for each window, find AX window (`AXUIElementCreateApplication(pid)` -> `kAXWindowsAttribute`) whose current AX frame matches the CG frame within 2px. Set size, then position, then size again (position-first makes some apps overshoot the requested height by 1px). Windows that refuse a size (minimum-size apps) are left at whatever size they accept. No retry.
 - 0 windows: no-op.
 - Accessibility permission: on launch call `AXIsProcessTrustedWithOptions` with prompt. Menu shows "Accessibility: not granted" item if false.
