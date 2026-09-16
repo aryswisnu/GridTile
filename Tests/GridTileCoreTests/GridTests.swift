@@ -55,6 +55,27 @@ final class GridTests: XCTestCase {
         XCTAssertEqual(cells[6], CGRect(x: 800, y: 425, width: 400, height: 400))
     }
 
+    func testRealDisplaysGiveExpectedShapes() {
+        // 16:9 minus menu bar, 16:10 MacBook minus menu bar
+        for area in [CGRect(x: 0, y: 30, width: 1920, height: 975), CGRect(x: 0, y: 30, width: 1728, height: 1050)] {
+            func shape(_ n: Int) -> [Int] {
+                let cells = gridLayout(count: n, in: area)
+                var rows: [CGFloat: Int] = [:]
+                cells.forEach { rows[$0.minY, default: 0] += 1 }
+                return rows.keys.sorted().map { rows[$0]! }
+            }
+            XCTAssertEqual(shape(2), [2], "\(area)")
+            XCTAssertEqual(shape(3), [3], "\(area)")
+            XCTAssertEqual(shape(4), [2, 2], "\(area)")
+            XCTAssertEqual(shape(5), [3, 2], "\(area)")
+            XCTAssertEqual(shape(6), [3, 3], "\(area)")
+            XCTAssertEqual(shape(7), [4, 3], "\(area)")
+            XCTAssertEqual(shape(8), [4, 4], "\(area)")
+            XCTAssertEqual(shape(9), [5, 4], "\(area)")
+            XCTAssertEqual(shape(12), [4, 4, 4], "\(area)")
+        }
+    }
+
     func testPortraitAreaStacksRows() {
         let portrait = CGRect(x: 0, y: 0, width: 800, height: 1200)
         let cells = gridLayout(count: 2, in: portrait)

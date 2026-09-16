@@ -30,18 +30,18 @@ Rectangle, Magnet, Moom and friends solve this with *more presets*: thirds, sixt
 
 GridTile has exactly one action. It looks at how many windows are visible on the display under your cursor, picks the grid that fits them, and tiles. Open another window, press again, the grid re-flows. Close three, press again, it re-flows.
 
-| Windows | 16:9 display | Ultrawide 21:9 |
+| Windows | 16:9 display | 16:10 MacBook |
 |:-:|:-:|:-:|
 | 1 | full screen | full screen |
 | 2 | side by side | side by side |
 | 3 | 3 columns | 3 columns |
-| 4 | 2 x 2 | 4 columns |
-| 5 | 3 on top, 2 below | 5 columns |
-| 7 | 4 on top, 3 below | 4 + 3 |
+| 4 | 2 x 2 | 2 x 2 |
+| 5 | 3 on top, 2 below | 3 on top, 2 below |
+| 7 | 4 on top, 3 below | 4 on top, 3 below |
 | 9 | 5 + 4 | 5 + 4 |
-| 12 | 4 x 3 | 6 x 2 |
+| 12 | 4 x 3 | 4 x 3 |
 
-The rule: `rows = round(sqrt(N * height / width))`, `cols = ceil(N / rows)`. Cells stay as close to square as the display allows, so a wide screen gets more columns and a portrait screen gets more rows. The last row stretches its windows to fill the width so there is never an empty hole.
+The rule: try every column count, score each candidate by its worst cell (how far from square, including the stretched last row), keep the lowest. Cells stay as square as the display allows. A portrait display gets rows instead of columns. The last row stretches its windows to fill the width so there is never an empty hole.
 
 ## What counts as a window
 

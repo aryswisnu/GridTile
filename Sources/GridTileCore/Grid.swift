@@ -1,16 +1,25 @@
 import CoreGraphics
+import Foundation
 
-/// Splits `area` into `count` cells, choosing the row count from the area's aspect ratio
-/// so cells stay close to square: rows = round(sqrt(count * height / width)), cols = ceil(count / rows).
-/// On a 16:9 display: 2 -> 2x1, 3 -> 3x1, 4 -> 2x2, 5 -> 3+2, 7 -> 4+3, 12 -> 4x3.
-/// Full rows have `cols` cells. The last row stretches its cells to fill the width.
+/// Splits `area` into `count` cells. Tries every column count and scores each candidate by the
+/// worst cell in it: |ln(width / height)| over both the full rows and the stretched last row.
+/// Lowest score wins, so cells stay as square as the display allows and a ragged last row
+/// with one huge stretched window loses. On a 16:9 display: 2 -> 2x1, 3 -> 3x1, 4 -> 2x2,
+/// 5 -> 3+2, 7 -> 4+3, 12 -> 4x3. On a portrait display rows win over columns.
 /// Cells are returned left-to-right, top-to-bottom, in CG coordinates (y down).
 public func gridLayout(count: Int, in area: CGRect) -> [CGRect] {
     guard count > 0, area.width > 0, area.height > 0 else { return [] }
-    let ideal = (Double(count) * Double(area.height) / Double(area.width)).squareRoot()
-    var rows = max(1, min(count, Int(ideal.rounded())))
-    let cols = (count + rows - 1) / rows
-    rows = (count + cols - 1) / cols   // drop rows that would be empty
+    var best = (cols: count, rows: 1, score: Double.infinity)
+    for cols in stride(from: count, through: 1, by: -1) {   // ties go to fewer rows
+        let rows = (count + cols - 1) / cols
+        let rowHeight = Double(area.height) / Double(rows)
+        let lastCount = count - (rows - 1) * cols
+        let full = abs(log((Double(area.width) / Double(cols)) / rowHeight))
+        let last = abs(log((Double(area.width) / Double(lastCount)) / rowHeight))
+        let score = max(full, last)
+        if score < best.score { best = (cols, rows, score) }
+    }
+    let (cols, rows) = (best.cols, best.rows)
     let rowHeight = area.height / CGFloat(rows)
     var cells: [CGRect] = []
     cells.reserveCapacity(count)
