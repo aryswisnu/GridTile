@@ -10,7 +10,7 @@ Menu-bar macOS app. One hotkey tiles every visible window on the current display
 - Order: sort by y then x of current frame (top-left first). Cells fill left to right, top to bottom.
 - Grid: N windows. `cols = ceil(sqrt(N))`, `rows = ceil(N / cols)`. Every full row has `cols` cells. Last row has `N - (rows-1)*cols` cells, each stretched to `width / lastCount`. Gap 0.
   - 1 -> 1x1. 2 -> 2x1. 4 -> 2x2. 7 -> 3 cols, rows 3,3,1. 12 -> 4x3.
-- Apply: for each window, find AX window (`AXUIElementCreateApplication(pid)` -> `kAXWindowsAttribute`) whose current AX frame matches the CG frame within 2px. Set `kAXPositionAttribute` then `kAXSizeAttribute`. Windows that refuse a size (minimum-size apps) are left at whatever size they accept. No retry.
+- Apply: for each window, find AX window (`AXUIElementCreateApplication(pid)` -> `kAXWindowsAttribute`) whose current AX frame matches the CG frame within 2px. Set size, then position, then size again (position-first makes some apps overshoot the requested height by 1px). Windows that refuse a size (minimum-size apps) are left at whatever size they accept. No retry.
 - 0 windows: no-op.
 - Accessibility permission: on launch call `AXIsProcessTrustedWithOptions` with prompt. Menu shows "Accessibility: not granted" item if false.
 - Menu bar: `NSStatusItem`, items: Tile Now (same action as hotkey), Launch at Login (toggle, `SMAppService.mainApp`), Quit.

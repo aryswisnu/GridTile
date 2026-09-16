@@ -5,7 +5,7 @@ import GridTileCore
 
 func tileNow() {
     let mouse = NSEvent.mouseLocation
-    let screen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main ?? NSScreen.screens[0]
+    guard let screen = NSScreen.screens.first(where: { $0.frame.contains(mouse) }) ?? NSScreen.main else { return }
     let windows = visibleWindows(on: screen)
     let cells = gridLayout(count: windows.count, in: cgRect(of: screen.visibleFrame))
     for (window, cell) in zip(windows, cells) {
@@ -21,6 +21,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         let trusted = AXIsProcessTrustedWithOptions(options)
 
+        hotkey = Hotkey(keyCode: UInt32(kVK_ANSI_T), modifiers: UInt32(controlKey | optionKey | cmdKey)) {
+            tileNow()
+        }
+
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.title = "⊞"
 
@@ -29,6 +33,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let tileItem = NSMenuItem(title: "Tile Now  ⌃⌥⌘T", action: #selector(tile), keyEquivalent: "")
         tileItem.target = self
         menu.addItem(tileItem)
+
+        if !hotkey.isRegistered {
+            let item = NSMenuItem(title: "Hotkey ⌃⌥⌘T unavailable (in use by another app)", action: nil, keyEquivalent: "")
+            item.isEnabled = false
+            menu.addItem(item)
+        }
 
         if !trusted {
             menu.addItem(NSMenuItem(title: "Accessibility: not granted", action: nil, keyEquivalent: ""))
@@ -42,10 +52,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
-
-        hotkey = Hotkey(keyCode: UInt32(kVK_ANSI_T), modifiers: UInt32(controlKey | optionKey | cmdKey)) {
-            tileNow()
-        }
     }
 
     @objc private func tile() { tileNow() }

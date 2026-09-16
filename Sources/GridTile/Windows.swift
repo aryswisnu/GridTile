@@ -12,20 +12,25 @@ private let excludedOwners: Set<String> = [
     "Notification Center", "Spotlight", "GridTile",
 ]
 
+/// Vertical tolerance for treating two windows as being in the same row.
+private let rowTolerance: CGFloat = 40
+
 /// Converts an AppKit rect (origin bottom-left of primary display, y up)
 /// to CG coordinates (origin top-left of primary display, y down).
 func cgRect(of nsRect: CGRect) -> CGRect {
-    let primaryHeight = NSScreen.screens[0].frame.height
-    return CGRect(x: nsRect.minX, y: primaryHeight - nsRect.maxY, width: nsRect.width, height: nsRect.height)
+    let primary = NSScreen.screens.first(where: { $0.frame.origin == .zero }) ?? NSScreen.screens.first
+    guard let primary else { return nsRect }
+    return CGRect(x: nsRect.minX, y: primary.frame.height - nsRect.maxY, width: nsRect.width, height: nsRect.height)
 }
 
 /// Windows currently on screen (current Space, not minimized, not hidden) whose center
-/// lies on `screen`. Sorted top-to-bottom, then left-to-right.
+/// lies on `screen`. Sorted top-to-bottom by row, then left-to-right within each row.
 func visibleWindows(on screen: NSScreen) -> [VisibleWindow] {
     let target = cgRect(of: screen.frame)
     let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
     guard let list = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] else { return [] }
 
+    var used = Set<AXUIElement>()
     var result: [VisibleWindow] = []
     for info in list {
         guard (info[kCGWindowLayer as String] as? Int) == 0,
@@ -37,25 +42,44 @@ func visibleWindows(on screen: NSScreen) -> [VisibleWindow] {
               let frame = CGRect(dictionaryRepresentation: boundsDict),
               frame.width > 50, frame.height > 50,
               target.contains(CGPoint(x: frame.midX, y: frame.midY)),
-              let ax = axWindow(pid: pid, matching: frame)
+              let ax = axWindow(pid: pid, matching: frame, used: &used)
         else { continue }
         result.append(VisibleWindow(pid: pid, frame: frame, ax: ax))
     }
-    return result.sorted { a, b in
-        a.frame.minY != b.frame.minY ? a.frame.minY < b.frame.minY : a.frame.minX < b.frame.minX
-    }
+    return rowMajorSorted(result)
 }
 
-private func axWindow(pid: pid_t, matching frame: CGRect) -> AXUIElement? {
+/// Sorts top-to-bottom, then groups windows whose minY is within `rowTolerance`
+/// of the group's first window into a row and sorts that row left-to-right.
+private func rowMajorSorted(_ windows: [VisibleWindow]) -> [VisibleWindow] {
+    let byTop = windows.sorted { $0.frame.minY < $1.frame.minY }
+    var out: [VisibleWindow] = []
+    out.reserveCapacity(byTop.count)
+    var row: [VisibleWindow] = []
+    for w in byTop {
+        if let first = row.first, w.frame.minY - first.frame.minY > rowTolerance {
+            out.append(contentsOf: row.sorted { $0.frame.minX < $1.frame.minX })
+            row = []
+        }
+        row.append(w)
+    }
+    out.append(contentsOf: row.sorted { $0.frame.minX < $1.frame.minX })
+    return out
+}
+
+private func axWindow(pid: pid_t, matching frame: CGRect, used: inout Set<AXUIElement>) -> AXUIElement? {
     let app = AXUIElementCreateApplication(pid)
+    AXUIElementSetMessagingTimeout(app, 0.25)
     var value: CFTypeRef?
     guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &value) == .success,
           let windows = value as? [AXUIElement] else { return nil }
-    return windows.first { w in
-        guard let f = axFrame(w) else { return false }
+    let match = windows.first { w in
+        guard !used.contains(w), let f = axFrame(w) else { return false }
         return abs(f.minX - frame.minX) <= 2 && abs(f.minY - frame.minY) <= 2
             && abs(f.width - frame.width) <= 2 && abs(f.height - frame.height) <= 2
     }
+    if let match { used.insert(match) }
+    return match
 }
 
 private func axFrame(_ w: AXUIElement) -> CGRect? {
@@ -73,14 +97,25 @@ private func axFrame(_ w: AXUIElement) -> CGRect? {
     return CGRect(origin: pos, size: size)
 }
 
-/// Sets position then size. Apps with minimum sizes keep whatever size they accept.
+/// Sets size, then position, then size again. Setting position first makes some apps
+/// overshoot the requested height by a pixel. Apps with minimum sizes keep whatever
+/// size they accept.
 func apply(frame: CGRect, to w: AXUIElement) {
-    var pos = frame.origin
-    var size = frame.size
+    setSize(frame.size, on: w)
+    setPosition(frame.origin, on: w)
+    setSize(frame.size, on: w)
+}
+
+private func setPosition(_ origin: CGPoint, on w: AXUIElement) {
+    var pos = origin
     if let v = AXValueCreate(.cgPoint, &pos) {
         AXUIElementSetAttributeValue(w, kAXPositionAttribute as CFString, v)
     }
-    if let v = AXValueCreate(.cgSize, &size) {
+}
+
+private func setSize(_ size: CGSize, on w: AXUIElement) {
+    var s = size
+    if let v = AXValueCreate(.cgSize, &s) {
         AXUIElementSetAttributeValue(w, kAXSizeAttribute as CFString, v)
     }
 }
