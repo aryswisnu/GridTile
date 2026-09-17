@@ -35,7 +35,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.title = "⊞"
+        let icon = NSImage(systemSymbolName: "square.grid.3x2.fill", accessibilityDescription: "GridTile")?
+            .withSymbolConfiguration(.init(pointSize: 17, weight: .medium))
+        icon?.isTemplate = true
+        statusItem.button?.image = icon
 
         let menu = NSMenu()
         menu.delegate = self
